@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class H(BaseHTTPRequestHandler):
     def do_GET(self):
-        msg = b"hello from CI/CD v2\n"
+        msg = b"hello from CI/CD v3\n"
         self.send_response(200)
         self.end_headers()
         self.wfile.write(msg)
