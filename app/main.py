@@ -1,10 +1,43 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
+import json
+import logging
+from prometheus_client import start_http_server, Counter
 
-class H(BaseHTTPRequestHandler):
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+
+# Prometheus counter
+REQUEST_COUNT = Counter("demo_hits_total", "Total requests", ["path"])
+
+class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        msg = b"hello from CI/CD v3\n"
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(msg)
+        if self.path == "/":
+            self._send_response(200, f"hello from {os.getenv('APP','demo')} {os.getenv('VER','v1')}")
+        elif self.path == "/version":
+            data = {"app": os.getenv("APP","demo"), "ver": os.getenv("VER","v1")}
+            self._send_response(200, json.dumps(data), content_type="application/json")
+        elif self.path == "/healthz":
+            self._send_response(200, "ok")
+        else:
+            self._send_response(404, "not found")
 
-HTTPServer(('', 8080), H).serve_forever()
+    def _send_response(self, code, msg, content_type="text/plain"):
+        self.send_response(code)
+        self.send_header("Content-type", content_type)
+        self.end_headers()
+        self.wfile.write(msg.encode())
+        REQUEST_COUNT.labels(path=self.path).inc()
+        logging.info("Served %s with %d", self.path, code)
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", "8080"))
+    metrics_port = int(os.getenv("METRICS_PORT", "9000"))
+
+    # Start Prometheus metrics server
+    start_http_server(metrics_port)
+
+    # Start HTTP app server
+    srv = HTTPServer(("", port), MyHandler)
+    logging.info("server running on %d", port)
+    srv.serve_forever()
