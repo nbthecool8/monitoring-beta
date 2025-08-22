@@ -1,20 +1,22 @@
 name: Build & Deploy to Local K8s
+
 on:
   push:
     branches: [ "main" ]
+
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted   # your runner machine (with kubectl context)
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
+      - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & Push Image
+      - name: Build & Push image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -23,9 +25,16 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:latest
 
-      - name: Patch image tag in manifest
+      # Patch the Deployment to use the immutable SHA tag
+      - name: Patch image tag in k8s/deployment.yaml
         run: |
           yq -i '.spec.template.spec.containers[0].image = "${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:${{ github.sha }}"' k8s/deployment.yaml
 
-      - name: Deploy to Kubernetes
-        run: kubectl apply -f k8s/
+      - name: Apply manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          if [ -f k8s/servicemonitor.yaml ]; then kubectl apply -f k8s/servicemonitor.yaml; fi
+
+      - name: Wait for rollout
+        run: kubectl -n sock-shop rollout status deploy/demo
