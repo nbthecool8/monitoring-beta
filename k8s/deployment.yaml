@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  namespace: sock-shop
+  labels:
+    app: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+      annotations:
+        # harmless if you also use a ServiceMonitor
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: web
+        image: pranava2567/hello-cicd:latest
+        imagePullPolicy: Always
+        env:
+        - name: APP
+          value: "demo"
+        - name: VER
+          value: "v2"
+        - name: PORT
+          value: "8080"
+        - name: METRICS_PORT
+          value: "9000"
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9000
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 20
+          timeoutSeconds: 2
+          failureThreshold: 3
+

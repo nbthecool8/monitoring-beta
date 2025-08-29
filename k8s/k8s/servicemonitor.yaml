@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: demo
+  namespace: betamonitoring
+  labels:
+    # MUST match your kube-prometheus-stack Helm release name
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - sock-shop
+  selector:
+    matchLabels:
+      app: demo
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
