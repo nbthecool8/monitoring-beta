@@ -1,7 +1,7 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 import json
 import logging
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from prometheus_client import start_http_server, Counter
 
 # Logging setup
@@ -10,17 +10,19 @@ logging.basicConfig(level=logging.INFO)
 # Prometheus counter
 REQUEST_COUNT = Counter("demo_hits_total", "Total requests", ["path"])
 
+
 class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
-            self._send_response(200, f"hello from {os.getenv('APP','demo')} {os.getenv('VER','v1')}")
+            msg = f"hello from {os.getenv('APP', 'demo')} {os.getenv('VER', 'v4')}"
+            self._send_response(200, msg, "text/plain")
         elif self.path == "/version":
-            data = {"app": os.getenv("APP","demo"), "ver": os.getenv("VER","v1")}
-            self._send_response(200, json.dumps(data), content_type="application/json")
+            data = {"app": os.getenv("APP", "demo"), "ver": os.getenv("VER", "v1")}
+            self._send_response(200, json.dumps(data), "application/json")
         elif self.path == "/healthz":
-            self._send_response(200, "ok")
+            self._send_response(200, "ok", "text/plain")
         else:
-            self._send_response(404, "not found")
+            self._send_response(404, "not found", "text/plain")
 
     def _send_response(self, code, msg, content_type="text/plain"):
         self.send_response(code)
@@ -29,6 +31,7 @@ class MyHandler(BaseHTTPRequestHandler):
         self.wfile.write(msg.encode())
         REQUEST_COUNT.labels(path=self.path).inc()
         logging.info("Served %s with %d", self.path, code)
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8080"))
