@@ -14,7 +14,7 @@ REQUEST_COUNT = Counter("demo_hits_total", "Total requests", ["path"])
 class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
-            msg = f"hello from {os.getenv('APP', 'demo')} {os.getenv('VER', 'v4')}"
+            msg = f"hello from CI/CD v5"
             self._send_response(200, msg, "text/plain")
         elif self.path == "/version":
             data = {"app": os.getenv("APP", "demo"), "ver": os.getenv("VER", "v1")}
