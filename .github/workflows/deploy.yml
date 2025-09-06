@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted   # your runner machine (with kubectl context)
+    runs-on: self-hosted  
     steps:
       - uses: actions/checkout@v4
 
@@ -25,7 +25,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:latest
 
-      # Patch the Deployment to use the immutable SHA tag
+     
       - name: Patch image tag in k8s/deployment.yaml
         run: |
           yq -i '.spec.template.spec.containers[0].image = "${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:${{ github.sha }}"' k8s/deployment.yaml
