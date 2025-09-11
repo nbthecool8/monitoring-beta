@@ -37,7 +37,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--web.enable-lifecycle"
-    # Mount the WHOLE config dir to avoid single-file bind issues on WSL
+    
     volumes:
       - ./prometheus:/etc/prometheus:ro
       - prom_data:/prometheus
