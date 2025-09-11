@@ -4,15 +4,15 @@ metadata:
   name: demo
   namespace: betamonitoring
   labels:
-    # MUST match your kube-prometheus-stack Helm release name
+    # This label must match Prometheus' serviceMonitorSelector
     release: monitoring
 spec:
-  namespaceSelector:
-    matchNames:
-      - sock-shop
   selector:
     matchLabels:
       app: demo
+  namespaceSelector:
+    matchNames:
+      - sock-shop
   endpoints:
     - port: metrics
       path: /metrics

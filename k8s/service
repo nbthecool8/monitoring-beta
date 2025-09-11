@@ -12,6 +12,7 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
-    - name: metrics            # <-- add this
-      port: 9000               # <-- cluster port
-      targetPort: 9000         # <-- container port where main.py exposes metrics
+    - name: metrics
+      port: 9000
+      targetPort: 9000
+  type: ClusterIP

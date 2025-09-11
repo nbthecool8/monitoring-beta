@@ -1,0 +1,79 @@
+{
+  "id": null,
+  "title": "Demo App Overview",
+  "tags": ["demo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "In-Progress (by path)",
+      "targets": [
+        { "expr": "sum(demo_inprogress)", "refId": "A" }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 3 }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Requests Total",
+      "targets": [
+        { "expr": "sum by (path,method,code) (rate(demo_hits_total[1m]))", "refId": "A" }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 18, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Request Latency (p50/p90/p99)",
+      "targets": [
+        { "expr": "histogram_quantile(0.5, sum by (le,path,method) (rate(demo_request_seconds_bucket[1m])))", "legendFormat": "p50 {{path}}", "refId": "A" },
+        { "expr": "histogram_quantile(0.9, sum by (le,path,method) (rate(demo_request_seconds_bucket[1m])))", "legendFormat": "p90 {{path}}", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum by (le,path,method) (rate(demo_request_seconds_bucket[1m])))", "legendFormat": "p99 {{path}}", "refId": "C" }
+      ],
+      "gridPos": { "x": 0, "y": 3, "w": 24, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Votes per Poll Option (rate)",
+      "targets": [
+        { "expr": "sum by (poll_id,option) (rate(demo_poll_votes_total[1m]))", "refId": "A" }
+      ],
+      "gridPos": { "x": 0, "y": 11, "w": 12, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Background CPU Work (s)",
+      "targets": [
+        { "expr": "histogram_quantile(0.9, sum by (le) (rate(demo_compute_seconds_bucket[1m])))", "legendFormat": "p90", "refId": "A" }
+      ],
+      "gridPos": { "x": 12, "y": 11, "w": 12, "h": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Active Polls / A/B Flags",
+      "targets": [
+        { "expr": "demo_polls_total", "refId": "A" },
+        { "expr": "demo_ab_flags_total", "refId": "B" }
+      ],
+      "gridPos": { "x": 0, "y": 19, "w": 8, "h": 3 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Node CPU (host)",
+      "targets": [
+        { "expr": "rate(node_cpu_seconds_total{mode!=\"idle\"}[2m])", "refId": "A" }
+      ],
+      "gridPos": { "x": 8, "y": 19, "w": 16, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Container CPU - app",
+      "targets": [
+        { "expr": "rate(container_cpu_usage_seconds_total{container_label_io_kubernetes_container_name!=\"\",name!=\"\",id!=\"\",container!=\"\",image!=\"\", container_label_com_docker_compose_service=\"app\"}[2m])", "refId": "A" }
+      ],
+      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 8 }
+    }
+  ],
+  "templating": { "list": [] }
+}

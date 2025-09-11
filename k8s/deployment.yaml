@@ -14,44 +14,42 @@ spec:
     metadata:
       labels:
         app: demo
-      annotations:
-        # harmless if you also use a ServiceMonitor
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9000"
-        prometheus.io/path: "/metrics"
     spec:
       containers:
-      - name: web
-        image: pranava2567/hello-cicd:latest
-        imagePullPolicy: Always
-        env:
-        - name: APP
-          value: "demo"
-        - name: VER
-          value: "v2"
-        - name: PORT
-          value: "8080"
-        - name: METRICS_PORT
-          value: "9000"
-        ports:
-        - name: http
-          containerPort: 8080
-        - name: metrics
-          containerPort: 9000
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 20
-          timeoutSeconds: 2
-          failureThreshold: 3
-
+        - name: web
+          # TODO: replace with your pushed image (e.g., nbthecool8/hello-cicd:latest)
+          image: nbthecool8/hello-cicd:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP
+              value: "demo"
+            - name: VER
+              value: "v1"
+            - name: PORT
+              value: "8080"
+            - name: METRICS_PORT
+              value: "9000"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi

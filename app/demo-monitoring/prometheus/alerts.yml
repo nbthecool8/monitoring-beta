@@ -1,0 +1,51 @@
+groups:
+  - name: demo-app
+    rules:
+      - alert: DemoAppInstanceDown
+        expr: up{job="demo-app-metrics"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "demo-app instance down"
+          description: "No demo-app targets are UP for 1m."
+
+      - alert: DemoAppHighErrorRate
+        expr: |
+          sum(rate(demo_hits_total{code=~"5.."}[5m])) /
+          sum(rate(demo_hits_total[5m])) > 0.05
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: "High 5xx error rate (>5%)"
+          description: "Error ratio over last 5m exceeds 5%."
+
+      - alert: DemoAppHighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95, sum by (le) (rate(demo_request_seconds_bucket[5m]))
+          ) > 0.6
+        for: 3m
+        labels: {severity: warning}
+        annotations:
+          summary: "High p95 latency (>600ms)"
+          description: "p95 latency over last 5m is high."
+
+  - name: infra
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "node-exporter down"}
+
+      - alert: CadvisorDown
+        expr: up{job="cadvisor"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "cAdvisor down"}
+
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Prometheus down"}

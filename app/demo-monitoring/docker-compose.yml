@@ -1,0 +1,115 @@
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        - PY_IMAGE=${PY_IMAGE}
+    container_name: demo-app
+    environment:
+      - APP=${APP}
+      - VER=${VER}
+      - PORT=${APP_PORT}
+      - METRICS_PORT=${METRICS_PORT}
+      - DATA_PATH=${DATA_PATH}
+      - API_TOKEN=${API_TOKEN}
+      - RATE_LIMIT_RPS=${RATE_LIMIT_RPS}
+      - HTML_ENABLE=${HTML_ENABLE}
+      - LOG_PATH=${LOG_PATH}
+    volumes:
+      - app_data:/data
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    expose:
+      - "${METRICS_PORT}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:${APP_PORT}/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - monitor
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE}
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    # Mount the WHOLE config dir to avoid single-file bind issues on WSL
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prom_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    depends_on:
+      - app
+      - node-exporter
+      - cadvisor
+      - alertmanager
+    networks:
+      - monitor
+
+  grafana:
+    image: ${GRAFANA_IMAGE}
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_DEFAULT_THEME=dark
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - monitor
+
+  node-exporter:
+    image: ${NODE_EXPORTER_IMAGE}
+    container_name: node-exporter
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro"
+    ports:
+      - "9100:9100"
+    networks:
+      - monitor
+
+  cadvisor:
+    image: ${CADVISOR_IMAGE}
+    container_name: cadvisor
+    ports:
+      - "18080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitor
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    command: ["--config.file=/etc/alertmanager/config.yml"]
+    volumes:
+      - ./alertmanager/config.yml:/etc/alertmanager/config.yml:ro
+    ports:
+      - "9093:9093"
+    networks:
+      - monitor
+
+volumes:
+  app_data:
+  prom_data:
+  grafana_data:
+
+networks:
+  monitor:
+    driver: bridge
